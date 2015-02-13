@@ -1,0 +1,579 @@
+<HTML><HEAD><TITLE>Drawing Interchange File Formats</TITLE></HEAD><BODY>
+<a name="TOP"></a>
+<A NAME="XREF_50195"></A><A NAME="ID_386645"></A><center><H1>Drawing Interchange File Formats </H1></center>
+
+<hr><center><font size=2><tt>
+. <a href="dxf_toc.htm">CONTENTS</a> . | . <a href="al_u04_c.htm">DXF GROUP CODES</a> . | . <b>DRAWING INTERCHANGE FILE FORMATS</b> . </tt></font></center>
+<hr>
+<table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><i>The following DXF information can also be found in appendix C of the Release 13 AutoCAD Customization Guide. </i></td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td></tr></table><p>
+
+AutoCAD can be used as a complete drawing editor. However, in some applications, other programs must examine AutoCAD drawings or generate drawings to be viewed, modified, or plotted with AutoCAD. Five types of file formats for importing and exporting drawing data are described in this appendix. <P>
+Drawing Interchange Format (DXF) files enable the interchange of drawings between AutoCAD and other programs. DXF files can be either ASCII or binary formats. Because ASCII DXF files are more common than the binary format, this chapter uses the term <I>DXF file</I> when referring to ASCII DXF files and the term <I>binary DXF files</I> when referring to the binary format. <P>
+Both ASCII and binary DXF files contain a complete description of the AutoCAD drawing. Because much of the data in an AutoCAD drawing does not have an equivalent object type in other programs, the Drawing Interchange Binary (DXB) file format is provided, which creates a simpler geometric description of the drawing. <P>
+This appendix also presents the Slide file format and the Slide Library file format.<P>
+<hr size=1><U><I>Topics in this chapter:</I></U><BR>
+<ul>
+<li><a href="#ASCII_DXF_File_Format">ASCII DXF File Format</a></li>
+<li><a href="#Binary_DXF_File_Format">Binary DXF File Format</a></li>
+<li><a href="#DXB_Files">DXB Files</a></li>
+<li><a href="#Slide_File_Format">Slide File Format</a></li>
+<li><a href="#Slide_Library_File_Format">Slide Library File Format</a></li>
+</ul>
+
+<a name="ASCII_DXF_File_Format"></a><hr><P>
+<A NAME="ID_386651"></A><a href="#TOP"><H2>ASCII DXF File Format</H2></a><P>
+This section describes the format of ASCII DXF files. It contains information that is needed only if you write your own programs to process DXF files or work with entity information obtained by AutoLISP and ADS applications.<P>
+
+<hr size=1><U><I>Topics in this section:</I></U><BR>
+<ul>
+<li><a href="#New_for_AutoCAD_Release_13">New for AutoCAD Release 13</a>
+<li><a href="#General_File_Structure">General File Structure</a>
+<li><a href="#Symbol_Table_Example">Symbol Table Example </a>
+<li><a href="#Writing_DXF_Interface_Programs">Writing DXF Interface Programs</a>
+</ul><hr size=1>
+
+<A NAME="ID_386654"></A><a name="New_for_AutoCAD_Release_13"></a><H3>New for AutoCAD Release 13</H3><P>
+In addition to the new graphical entities, AutoCAD Release 13 introduces the nongraphical objects, dictionary, and xrecord. The new DXF file sections are CLASSES and OBJECTS. The following rules and conventions are new in AutoCAD Release 13 and apply directly to DXF files:<P>
+<ul>
+<li>Handles are always enabled.<BR>
+<li>All database objects (including symbol tables, symbol table entries, and dictionaries) have handles and may have extended data (xdata) and persistent reactors.<BR>
+<li>Group order independence is deemphasized.
+</ul>
+For more information on these DXF concepts, see appendix C, <A HREF="al_u04_c.htm#XREF_84895">"DXF Group Codes."</A><P>
+The new group codes and group code ranges are as follows:<P>
+<I>New group codes<BR></I>
+<TABLE BORDER=1><TR VALIGN=TOP><TD><B>Group codes</B></TD>
+<TD><B>Description</B></TD></TR>
+<TR VALIGN=TOP><TD>60</TD>
+<TD>Entity visibility</TD></TR>
+<TR VALIGN=TOP><TD>90-99</TD>
+<TD>32-bit integer values</TD></TR>
+<TR VALIGN=TOP><TD>100</TD>
+<TD>Subclass marker group code</TD></TR>
+<TR VALIGN=TOP><TD>102</TD>
+<TD>Control string</TD></TR>
+<TR VALIGN=TOP><TD>105</TD>
+<TD>Dimension style handles</TD></TR>
+<TR VALIGN=TOP><TD>280-289</TD>
+<TD>8-bit integer values</TD></TR>
+<TR VALIGN=TOP><TD>300-309</TD>
+<TD>Arbitrary text strings</TD></TR>
+<TR VALIGN=TOP><TD>310-319</TD>
+<TD>Arbitrary binary chunks</TD></TR>
+<TR VALIGN=TOP><TD>320-329</TD>
+<TD>Arbitrary handles</TD></TR>
+<TR VALIGN=TOP><TD>330-339</TD>
+<TD>Soft pointer handle</TD></TR>
+<TR VALIGN=TOP><TD>340-349</TD>
+<TD>Hard pointer handle</TD></TR>
+<TR VALIGN=TOP><TD>350-359</TD>
+<TD>Soft owner handle</TD></TR>
+<TR VALIGN=TOP><TD>360-369</TD>
+<TD>Hard owner handle</TD></TR>
+</TABLE><P>
+<P>
+Some of the new group codes represent new data types, such as 8-bit and 32-bit integer values, while others perpetuate the ever-expanding dimension style symbol table. Also, specific group codes have been added for various new fields and structures associated with entities and objects, such as object references and linetype scaling. The new group codes are defined in order to give application developers a few codes for each data type with the intent of reusing the currently available group code ranges as needed.<P>
+Programs parsing DXF files and result buffer chains in ADS and AutoLISP that are intended to be tolerant of new AutoCAD versions are supposed to ignore group codes they do not recognize. It is trivial for ADS, AutoLISP, and ARX programs to do so, as well as for ASCII DXF programs. Binary DXF is another matter, because if the DXF readers do not recognize a group code, they have no easy way to skip it.<P>
+<A NAME="ID_386744"></A><a name="General_File_Structure"></a><H3>General File Structure</H3><P>
+Essentially a DXF file is composed of pairs of codes and associated values. The codes, known as <I>group codes</I>, indicate the type of value that follows. Using these group code and value pairs, a DXF file is organized into sections, which are composed of records, which in turn are composed of a group code and a data item. Each group code and value are on their own line in the DXF file. <P>
+Each section starts with a group code 0 followed by the string, SECTION. This is followed by a group code 2 and a string indicating the name of the section (for example, HEADER). Each section is composed of group codes and values that define its elements. A section ends with a 0 followed by the string ENDSEC. <P>
+It may be helpful to produce a DXF file from a small drawing, print it out, and refer to it while reading the information presented next.<P>
+<A NAME="ID_396357"></A><A NAME="ID_386748"></A><H4>DXF File Structure</H4><P>
+The overall organization of a DXF file is as follows:<P>
+<ul>
+<li><I>HEADER section. </I> General information about the drawing is found in this section. It consists of an AutoCAD database version number and a number of system variables. Each parameter contains a variable name and its associated value.
+<li><I>CLASSES section</I>. Holds the information for application-defined classes, whose instances appear in the BLOCKS, ENTITIES, and OBJECTS sections of the database. A class definition is permanently fixed in class hierarchy.
+<li><I>TABLES section.</I>  This section contains definitions for the following symbol tables. 
+<ul>
+<li>APPID (application identification table)
+<li>BLOCK_RECORD (block reference table)
+<li>DIMSTYLE (dimension style table)
+<li>LAYER (layer table)
+<li>LTYPE (linetype table)
+<li>STYLE (text style table)
+<li>UCS (User Coordinate System table)
+<li>VIEW (view table)
+<li>VPORT (viewport configuration table)
+</ul>
+<li><I>BLOCKS section .</I> Contains block definition and drawing entities that make up each block reference in the drawing.
+<li><I>ENTITIES section .</I> This section contains the graphical objects (entities) in the drawing, including block references (insert entities).
+<li><I>OBJECTS section.</I> Contains the nongraphical objects in the drawing. All objects that are not entities or symbol table records or symbol tables are stored in this section. Examples of entries in the OBJECTS section are dictionaries that contain mline styles and groups. 
+</ul>
+If you use the Entities option of the DXFOUT command, the resulting DXF file contains only the ENTITIES section and the EOF marker. The ENTITIES section contains only the objects you select for output. If you select an insert entity, the corresponding block definition is not included in the output file.<P>
+<A NAME="ID_396356"></A><A NAME="ID_386767"></A><H4>Group Codes</H4><P>
+Group codes and the associated values define a specific aspect of an object or entity. The line immediately following the group code is the associated value. This value can be a a string, an integer, or a floating-point value, such as the <I>X </I>coordinate of a point. The lines following the second line of the group, if any, are determined by the group definition and the data associated with the group.<P>
+Special group codes are used as file separators, such as markers for the beginning and end of sections, tables, and the end of the file itself.<P>
+Entities, objects, classes, tables and table entries, and file separators are introduced with a 0 group code that is followed by a name describing the group.<P>
+The maximum DXF file string length is 256 characters. If your AutoCAD drawing contains strings that exceed this number, those strings are truncated during DXFOUT. DXFIN fails if your DXF file contains strings that exceed this number.<P>
+<A NAME="XREF_33015"></A><A NAME="ID_386772"></A><H5>ASCII Control Characters</H5><P>
+DXFOUT handles ASCII control characters in text strings by expanding the character into a caret (^) followed by the appropriate letter. For example, an ASCII Control-G (BEL, decimal code 7) is output as ^G. If the text itself contains a caret character, it is expanded to caret, space (^ ). DXFIN performs the complementary conversion.<P>
+<A NAME="ID_400242"></A><a name="Symbol_Table_Example"></a><H3>Symbol Table Example </H3><P>
+This DXF sequence represents three full objects: the symbol table itself plus two entries.<P>
+<TT>&nbsp;&nbsp;0<BR>
+TABLE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>It's a table, but what kind?</I> <TT><BR>
+&nbsp;&nbsp;2<BR>
+STYLE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>This kind. Exception to rule that code 0 fully defines type.</I> <TT><BR>
+&nbsp;&nbsp;5<BR>
+1C&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>STYLE table handle; same as for entities and other objects.</I> <TT><BR>
+&nbsp;70<BR>
+3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Maximum number of STYLE table records to follow (pre-Release 13 field).</I> <TT><BR>
+1001<BR>
+APP_X&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>APP_X has put xdata on a symbol table.</I> <TT><BR>
+1040<BR>
+42.0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Just a single floating-point number.</I> <TT><BR>
+&nbsp;&nbsp;0<BR>
+STYLE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Beginning of first element in the STYLE symbol table.</I> <TT><BR>
+&nbsp;&nbsp;5<BR>
+3A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>The first entry's handle. (DIMSTYLE entries will have 105 here.)</I> <TT><BR>
+&nbsp;&nbsp;2<BR>
+ENTRY_1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>The first entry's text name.</I> <TT><BR>
+&nbsp;70<BR>
+64&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Standard flag values.</I> <TT><BR>
+&nbsp;40<BR>
+.4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Text height.</I> <TT><BR>
+&nbsp;41<BR>
+1.0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Width scale factor.</I> <TT><BR>
+&nbsp;50<BR>
+0.0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Oblique angle.</I> <TT><BR>
+&nbsp;71<BR>
+0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Text generation flags.</I> <TT><BR>
+&nbsp;42<BR>
+0.4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Last height used.</I> <TT><BR>
+&nbsp;&nbsp;3<BR>
+BUFONTS.TXT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Primary font file name.</I> <TT><BR>
+&nbsp;&nbsp;0<BR>
+STYLE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Second entry begins. No xdata or persistent reactors on first entry.</I> <TT><BR>
+&nbsp;&nbsp;5<BR>
+C2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Second entry handle.</I> <TT><BR>
+&nbsp;&nbsp;2<BR>
+ENTRY_2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Second entry text name.</I> <TT><BR>
+...<BR>
+...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Other fields down to group code 3.</I> <TT><BR>
+&nbsp;&nbsp;3<BR>
+BUFONTS.TXT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Primary font file name and last object type--specific group.</I> <TT><BR>
+102<BR>
+{ACAD_REACTORS&nbsp;&nbsp;</TT><I>This entry has a couple of persistent reactors.</I> <TT><BR>
+330<BR>
+3C2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Soft ID to first reactor object.</I> <TT><BR>
+330<BR>
+41B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Soft ID to first reactor object.</I>  <TT><BR>
+102<BR>
+}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Indicates the end of the reactor set. </I> <TT><BR>
+1001<BR>
+APP_1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Xdata attached to this entry. </I> <TT><BR>
+1070<BR>
+45  <BR>
+1001<BR>
+APP_2  <BR>
+1004<BR>
+18A5B3EF2C199A<BR>
+&nbsp;&nbsp;0<BR>
+UCS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Start of UCS table (and end of previous record and table).</I> <P>
+
+<A NAME="ID_396431"></A><A NAME="ID_390996"></A><A NAME="ID_390995"></A><a name="Writing_DXF_Interface_Programs"></a><H3>Writing DXF Interface Programs</H3><P>
+Writing a program that communicates with AutoCAD by means of the DXF mechanism appears more difficult than it actually is. The DXF format makes it easy to ignore information you don't need, while reading the information you do need.<P>
+The following example is a Microsoft BASIC&#153; program that reads a DXF file and extracts all the line entities from the drawing (ignoring lines that appear inside blocks). It displays the endpoints of these lines on the screen. This program is an example of how simple a DXF-reading program can be.<P>
+<TT>1000  REM<BR>
+1010  REM Extract lines from DXF file<BR>
+1020  REM<BR>
+1030  G1% = 0<BR>
+1040  LINE INPUT "DXF file name: "; A$<BR>
+1050  OPEN "i", 1, A$ + ".dxf"<BR>
+1060  REM<BR>
+1070  REM Ignore until section start encountered<BR>
+1080  REM<BR>
+1090  GOSUB 2000<BR>
+1100  IF G% &lt&gt 0 THEN 1090<BR>
+1110  IF S$ &lt&gt "SECTION" THEN 1090 <BR>
+1120  GOSUB 2000<BR>
+1130  REM<BR>
+1140  REM Skip unless ENTITIES section<BR>
+1150  REM<BR>
+1160  IF S$ &lt&gt "ENTITIES" THEN 1090<BR>
+1170  REM<BR>
+1180  REM Scan until end of section, processing LINEs<BR>
+1190  REM<BR>
+1200  GOSUB 2000<BR>
+1210  IF G% = 0 AND S$ = "ENDSEC" THEN 2200<BR>
+1220  IF G% = 0 AND S$ = "LINE" THEN GOSUB 1400 : GOTO 1210<BR>
+1230  GOTO 1200<BR>
+1400  REM<BR>
+1410  REM Accumulate LINE entity groups<BR>
+1420  REM<BR>
+1430  GOSUB 2000<BR>
+1440  IF G% = 10 THEN X1 = X : Y1 = Y : Z1 = Z<BR>
+1450  IF G% = 11 THEN X2 = X : Y2 = Y : Z2 = Z<BR>
+1460  IF G% = 0 THEN PRINT "Line from (";X1;",";Y1;",";Z1;") to (";X2;",";Y2;",";Z2;")":RETURN<BR>
+1470  GOTO 1430<BR>
+2000  REM<BR>
+2010  REM Read group code and following value<BR>
+2020  REM For X coordinates, read Y and possibly Z also<BR>
+2030  REM<BR>
+2040  IF G1% &lt 0 THEN G% = -G1% : G1% = 0 ELSE INPUT #1, G%<BR>
+2050  IF G% &lt 10 OR G% = 999 THEN LINE INPUT #1, S$ : RETURN<BR>
+2060  IF G% &gt= 38 AND G% &lt= 49 THEN INPUT #1, V : RETURN<BR>
+2080  IF G% &gt= 50 AND G% &lt= 59 THEN INPUT #1, A : RETURN<BR>
+2090  IF G% &gt= 60 AND G% &lt= 69 THEN INPUT #1, P% : RETURN<BR>
+2100  IF G% &gt= 70 AND G% &lt= 79 THEN INPUT #1, F% : RETURN<BR>
+2110  IF G% &gt= 210 AND G% &lt= 219 THEN 2130<BR>
+2115  IF G% &gt= 1000 THEN LINE INPUT #1, T$ : RETURN<BR>
+2120  IF G% &gt= 20 THEN PRINT "Invalid group code";G% : STOP<BR>
+2130  INPUT #1, X<BR>
+2140  INPUT #1, G1%<BR>
+2150  IF G1% &lt&gt (G%+10) THEN PRINT "Invalid Y coord code"; G1% : STOP<BR>
+2160  INPUT #1, Y <BR>
+2170  INPUT #1, G1%<BR>
+2180  IF G1% &lt&gt (G%+20) THEN G1% = -G1% ELSE INPUT #1, Z<BR>
+2190  RETURN<BR>
+2200  CLOSE 1<P>
+</TT>Writing a program that constructs a DXF file poses different problems. You must maintain consistency within the drawing, although with AutoCAD you can omit many items in a DXF file and still obtain a usable drawing. The entire HEADER section can be omitted if you don't set header variables. Any of the tables in the TABLES section can be omitted if you don't need to make entries, and the entire TABLES section can be dropped if nothing in it is required. If you define any linetypes in the LTYPE table, this table must appear before the LAYER table. If no block definitions are used in the drawing, the BLOCKS section can be omitted. If present, the BLOCKS section must appear before the ENTITIES section. Within the ENTITIES section, you can reference layer names even though you haven't defined them in the LAYER table. Such layers are automatically created with color 7 and the CONTINUOUS linetype. The EOF item must be present at the end of file.<P>
+The following Microsoft BASIC program constructs a DXF file representing a polygon with a specified number of sides, leftmost origin point, and side length. This program supplies only the ENTITIES section of the DXF file and places all entities generated on the default layer 0. Because this program doesn't create the drawing header, the drawing limits, extents, and current view will be invalid after performing a DXFIN on the drawing generated by this program. You can do a ZOOM Extents to fill the screen with the drawing generated. Then adjust the limits manually.<P>
+<TT>1000  REM<BR>
+1010  REM Polygon generator<BR>
+1020  REM<BR>
+1030  LINE INPUT "Drawing (DXF) file name: "; A$<BR>
+1040  OPEN "o", 1, A$ + ".dxf"<BR>
+1050  PRINT #1, 0<BR>
+1060  PRINT #1, "SECTION"<BR>
+1070  PRINT #1, 2<BR>
+1080  PRINT #1, "ENTITIES"<BR>
+1090  PI = ATN(1) * 4<BR>
+1100  INPUT "Number of sides for polygon: "; S%<BR>
+1110  INPUT "Starting point (X,Y): "; X, Y<BR>
+1120  INPUT "Polygon side: "; D<BR>
+1130  A1 = (2 * PI) / S%<BR>
+1140  A = PI / 2<BR>
+1150  FOR I% = 1 TO S%<BR>
+1160  PRINT #1, 0<BR>
+1170  PRINT #1, "LINE"<BR>
+1180  PRINT #1, 8<BR>
+1190  PRINT #1, "0"<BR>
+1200  PRINT #1, 10<BR>
+1210  PRINT #1, X<BR>
+1220  PRINT #1, 20<BR>
+1230  PRINT #1, Y<BR>
+1240  PRINT #1, 30<BR>
+1250  PRINT #1, 0.0<BR>
+1260  NX = D * COS(A) + X<BR>
+1270  NY = D * SIN(A) + Y<BR>
+1280  PRINT #1, 11<BR>
+1290  PRINT #1, NX<BR>
+1300  PRINT #1, 21<BR>
+1310  PRINT #1, NY<BR>
+1320  PRINT #1, 31<BR>
+1330  PRINT #1, 0.0<BR>
+1340  X = NX<BR>
+1350  Y = NY<BR>
+1360  A = A + A1<BR>
+1370  NEXT I%<BR>
+1380  PRINT #1, 0<BR>
+1390  PRINT #1, "ENDSEC"<BR>
+1400  PRINT #1, 0<BR>
+1410  PRINT #1, "EOF"<BR>
+1420  CLOSE 1<P>
+</TT>As long as a properly formatted item appears on the line on which the data is expected, DXFIN accepts it. (Of course, string items should not have leading spaces unless these are intended to be part of the string.) This program takes advantage of this flexibility in input format and does not generate a file exactly like one generated by AutoCAD.<P>
+In the case of an error in using DXFIN TO load, AutoCAD reports the error with a message indicating the nature of the error and the last line processed in the <I>dxf</I> file before the error was detected. This may not be the line on which the error occurred, especially in the case of errors such as the omission of required groups. <P>
+<a name="Binary_DXF_File_Format"></a><hr><P>
+<A NAME="ID_398547"></A><A NAME="XREF_35235"></A><A NAME="ID_398548"></A><a href="#TOP"><H2>Binary DXF File Format</H2></a><P>
+The ASCII DXF file format is a complete representation of an AutoCAD drawing in an ASCII text form, and is easily processed by other programs. In addition, AutoCAD can produce or read a binary form of the full DXF file and accept limited input in another binary file format. <P>
+The DXFOUT command provides a Binary option that writes binary <I>dxf </I>files. Such a file contains all of the information present in an ASCII DXF file but in a more compact form that takes, typically, 25 percent less file space and can be read and written more quickly (typically, five times faster) by AutoCAD. Unlike ASCII <I>dxf </I>files, which entail a trade-off between size and floating-point accuracy, binary <I>dxf </I>files preserve all of the accuracy in the drawing database. (AutoCAD Release 10 was the first version to support this form of DXF file; it cannot be read by older versions.)<P>
+A binary DXF file begins with a 22-byte sentinel consisting of the following:<P>
+<TT>AutoCAD Binary DXF&ltCR&gt&ltLF&gt&ltSUB&gt&ltNULL&gt<P>
+</TT>Following the sentinel are pairs (group, value) as in an ASCII DXF file but represented in binary form. The group code is a single-byte binary value, and the value that follows is one of the following:<P>
+<P>
+<ul>
+<li>A 2-byte integer with the least significant byte first and the most significant byte last<BR>
+<li>An 8-byte IEEE double-precision floating-point number stored with the least significant byte first and the most significant byte last<BR>
+<li>An ASCII string terminated by a 0 (NULL) byte<BR>
+</ul>
+<P>
+The type of the datum following a group is determined from the group code by the same rules used in decoding ASCII DXF files. Translation of angles to degrees and dates to fractional Julian date representation is performed for binary files, as well as for ASCII DXF files. The comment group, 999, is not used in binary DXF files.<P>
+Extended data group codes are represented in binary DXF as a single byte with the value 255, followed by a 2-byte integer value containing the actual group code, followed by the actual value.<P>
+Extended data long (group code 1071) values occupy 4 bytes of data. Extended data binary chunks (group code 1004) are represented as a single-byte, unsigned integer length, followed by the specified number of bytes of chunk data. For example, to transfer an extended data long group, the following values would appear, occupying 1, 2, and 4 bytes respectively.<P>
+
+<TT>255&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Escape group code</I> <BR>
+<TT>1071&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>True group code</I> <BR>
+<TT>999999&nbsp;&nbsp;</TT><I>Value for the 1071 group code</I> <BR>
+<BR>
+DXFOUT writes binary DXF files with the same file type (<I>.dxf</I>) as for ASCII DXF files. The DXFIN command automatically recognizes a binary file by means of its sentinel string. There is no need for you to identify it as a binary file.<P>
+If DXFIN encounters an error in a binary DXF file, it reports the byte address within the file where the error was detected.<P>
+<a name="DXB_Files"></a><hr><P>
+<A NAME="ID_391132"></A><a href="#TOP"><H2>DXB Files</H2></a><P>
+The DXF file formats are complete representations of an AutoCAD drawing that can be written and read by AutoCAD and other programs. However, programs executed by means of the external commands facility often need to supply simple geometric input to AutoCAD. For these purposes, AutoCAD supports another file format, called DXB (drawing interchange binary), which is limited in the entities it can represent.<P>
+To load a DXB file, enter the DXBIN command:<P>
+<B>dxbin</B> <P>
+When AutoCAD prompts you, respond with the name of the file you want to load. You do not need to include a .<I>dxb</I> file because the type is assumed. <P>
+There is no direct AutoCAD command for writing a DXB file, but the ADI "AutoCAD file output formats" plotter driver can write such a file. If you want to create a DXB file from an AutoCAD drawing, configure the "file output formats" plotter and select its "AutoCAD DXB file" output option.<P>
+<A NAME="ID_396438"></A><A NAME="ID_391139"></A><A NAME="ID_391140"></A><a name="The_DXB_File_Format"></a><H3>The DXB File Format</H3><P>
+This information is for experienced programmers and is subject to change without notice.<P>
+The format of a DXB file is as follows:<P>
+<TT>Header: "AutoCAD DXB 1.0" CR LF ^Z NUL&nbsp;&nbsp;</TT><I>(19 bytes)</I> <BR>
+Data:&nbsp;&nbsp;&nbsp;<I>...Zero or more data records...</I> <BR>
+Terminator: NUL 	<I>(1 byte)</I> <BR>
+<BR>
+</TT>Each data record begins with a single byte identifying the record type, followed by data items. The data items have various forms of representation and encoding. In the following descriptions of the letter codes, each data item is prefixed with a letter and a hyphen. <P>
+<DL COMPACT>
+<DT><B>w-</B><DD>16-bit integer, byte reversed in the standard 80x86 style the least significant byte first, and the most significant byte second).
+<DT><B>f-</B><DD>IEEE 64-bit floating-point value stored with LSB first, MSB last (as stored by an 80x87).
+<DT><B>l-</B><DD>32-bit integer with the bytes reversed 80x86 style.
+<DT><B>n-</B><DD>Either a 16-bit integer or a floating-point number, depending on the most recent setting of the number mode data item. The number mode defaults to 0, signifying integers. If set to 1, all n- items will be read as floating point.
+<DT><B>u-</B><DD>Either a 32-bit integer or a floating-point number, depending on the most recent number mode setting. If a 32-bit integer, the value is scaled by multiplying it by 65,536 (216). If a floating-point value, no scaling is applied.
+<DT><B>a-</B><DD>An angle. If number mode is integer, this is a 32-bit integer representing an angle in units of millionths of a degree (range 0 to 360,000,000). If a floating-point number, it represents degrees.
+</DL><P>
+In the following table, the lengths include the item-type byte and assume that the number mode is set to 0 (integer mode). If number mode is floating point, add 6 bytes to the length for each n- item present and 4 bytes for each a- or u- item present.<P>
+<I>Byte length for item types <BR></I>
+<TABLE BORDER=1><TR VALIGN=TOP><TD><B>Item type</B></TD>
+<TD><B>Code<BR>
+</B><B>(decimal)</B></TD>
+<TD><B>Data items</B></TD>
+<TD><B>Length <BR>
+(bytes)</B></TD></TR>
+<TR VALIGN=TOP><TD>Line</TD>
+<TD>1</TD>
+<TD>n-fromx n-fromy<BR>
+n-tox n-toy<BR>
+n-fromx n-fromy n-fromz<BR>
+n-tox n-toy n-toz</TD>
+<TD>13</TD></TR>
+<TR VALIGN=TOP><TD>Point</TD>
+<TD>2</TD>
+<TD>n-x n-y</TD>
+<TD>5</TD></TR>
+<TR VALIGN=TOP><TD>Circle</TD>
+<TD>3</TD>
+<TD>n-ctrx n-ctry n-rad</TD>
+<TD>7</TD></TR>
+<TR VALIGN=TOP><TD>Arc</TD>
+<TD>8</TD>
+<TD>n-ctrx n-ctry n-rad<BR>
+a-starta a-enda</TD>
+<TD>19</TD></TR>
+<TR VALIGN=TOP><TD>Trace</TD>
+<TD>9</TD>
+<TD>n-x1 n-y1 n-x2 n-y2<BR>
+n-x3 n-y3 n-x4 n-y4</TD>
+<TD>17</TD></TR>
+<TR VALIGN=TOP><TD>Solid</TD>
+<TD>11</TD>
+<TD>n-x1 n-y1 n-x2 n-y2<BR>
+n-x3 n-y3 n-x4 n-y4</TD>
+<TD>17</TD></TR>
+<TR VALIGN=TOP><TD>Seqend</TD>
+<TD>17</TD>
+<TD>(none)</TD>
+<TD>1</TD></TR>
+<TR VALIGN=TOP><TD>Polyline</TD>
+<TD>19</TD>
+<TD>w-closureflag</TD>
+<TD>3</TD></TR>
+<TR VALIGN=TOP><TD>Vertex</TD>
+<TD>20</TD>
+<TD>n-x n-y</TD>
+<TD>5</TD></TR>
+<TR VALIGN=TOP><TD>3Dface</TD>
+<TD>22</TD>
+<TD>n-x1 n-y1 n-z1<BR>
+n-x2 n-y2 n-z2<BR>
+n-x3 n-y3 n-z3<BR>
+n-x4 n-y4 n-z4</TD>
+<TD>25</TD></TR>
+<TR VALIGN=TOP><TD>Scale factor</TD>
+<TD>128</TD>
+<TD>f-scalefac</TD>
+<TD>9</TD></TR>
+<TR VALIGN=TOP><TD>New layer</TD>
+<TD>129</TD>
+<TD>"layername" NUL</TD>
+<TD>layername<BR>
+length + 2</TD></TR>
+<TR VALIGN=TOP><TD>Line extension</TD>
+<TD>130</TD>
+<TD>n-tox n-toy</TD>
+<TD>5</TD></TR>
+<TR VALIGN=TOP><TD>Trace extension</TD>
+<TD>131</TD>
+<TD>n-x3 n-y3 n-x4 n-y4</TD>
+<TD>9</TD></TR>
+<TR VALIGN=TOP><TD>Block base</TD>
+<TD>132</TD>
+<TD>n-bx n-by</TD>
+<TD>5</TD></TR>
+<TR VALIGN=TOP><TD>Bulge</TD>
+<TD>133</TD>
+<TD>u-2h/d</TD>
+<TD>5</TD></TR>
+<TR VALIGN=TOP><TD>Width</TD>
+<TD>134</TD>
+<TD>n-startw n-endw</TD>
+<TD>5</TD></TR>
+<TR VALIGN=TOP><TD>Number mode</TD>
+<TD>135</TD>
+<TD>w-mode</TD>
+<TD>3</TD></TR>
+<TR VALIGN=TOP><TD>New color</TD>
+<TD>136</TD>
+<TD>w-colornum</TD>
+<TD>3</TD></TR>
+<TR VALIGN=TOP><TD>3Dline extension</TD>
+<TD>137</TD>
+<TD>n-tox n-toy n-toz</TD>
+<TD>7</TD></TR>
+</TABLE><P>
+<P>
+The line extension item extends the last line or line extension from its To point to a new To point. The trace extension item extends the last trace solid, or trace extension from its x3,y3-x4,y4 ending line to a new x3,y3--x4,y4 line.<P>
+The scale factor is a floating-point value by which all integer coordinates are multiplied to obtain the floating-point coordinates used by the entities. The initial scale factor when a file is read is 1.0. The new layer item creates a layer if none exists, giving the new layer the same defaults as the LAYER New command, and sets that layer as the current layer for subsequent entities. At the end of the DXB file load, the layer in effect before the command is restored.<P>
+The block base item specifies the base (origin) point of a created block. The block base must be defined before the first entity record is encountered. If DXB does not define a block, this specification is ignored.<P>
+A polyline consists of straight segments of fixed width connecting the vertices, except as overridden by the bulge and width items. The closure flag should be 0 or 1; if it is 1, there is an implicit segment from the last vertex (immediately before the Seqend) to the first vertex.<P>
+A bulge item, encountered between two vertex items (or after the last vertex of a closed polyline), indicates that the two vertices are connected by an arc rather by than a straight segment. If the distance between the vertices has length <I>d</I>, and the perpendicular distance from the midpoint of that segment to the arc is <I>h</I>, then the magnitude of the bulge is (2 * <I>h / d</I>). The sign is negative if the arc from the first vertex to the second is clockwise. A semicircle thus has a bulge of 1 (or -1). If the number mode is 0 (integer), bulge items are scaled by 2 16. If the number mode has been set to floating point, then the floating-point value supplied is 2*h/d (not scaled).<P>
+The width item indicates the starting and ending widths of the segment (straight or curved) connecting two vertices. This width stays in effect until the next width item or the seqend. If there is a width item between the polyline item and the first vertex, it is stored as a default width for the polyline. This saves considerable database space if the polyline has several segments of this width.<P>
+The number mode item controls the mode of items with types given in the preceding table as n-, a-, or u-. If the value supplied is 0, these values will be integers; otherwise, they are floating point.<P>
+To remember the last to-point, lines share the same cells, so do <I>not</I> mix extension groups for the two entities without an initial group before the extension. There is no extension group for 3D faces, because there is no obvious edge to extend from.<P>
+The new color group specifies the color for subsequent entities in the DXB file. The w-colornum word argument is in the range from 0 to 256. 0 means color by block, 1-255 are the standard AutoCAD colors, and 256 means color by layer. A color outside the range from 0 to 256 sets the color back to the current entity color (you can do this deliberately, and it can be quite useful). The initial entity color of material added by DXBIN is the current entity color.<P>
+All points specified in the DXB file are interpreted in terms of the current UCS at the time that the DXBIN command is executed. <P>
+<a name="Slide_File_Format"></a><hr><P>
+<A NAME="ID_401023"></A><a href="#TOP"><H2>Slide File Format</H2></a><P>
+Note: This information is for experienced programmers, and is subject to change without notice.<P>
+AutoCAD slide files are screen images written by the MSLIDE command and read by the VSLIDE command. This section describes the format of slide files for the benefit of developers who wish to incorporate support for AutoCAD slides into their programs.<P>
+A slide file consists of a header portion (31 bytes) and one or more data records of variable length. All coordinates and sizes written to the slide file reflect the graphics area of the display device from which the slide was created with point (0,0) located at the lower-left corner of the graphics area. For AutoCAD Release 9 and later, the slide file header consists of the following fields:<P>
+<I>Slide file heade<BR></I>
+<TABLE BORDER=1><TR VALIGN=TOP><TD><B>Field</B></TD>
+<TD><B>Bytes</B></TD>
+<TD><B>Description</B></TD></TR>
+<TR VALIGN=TOP><TD>ID string</TD>
+<TD>17</TD>
+<TD>"AutoCAD Slide" CR LF ^Z NUL</TD></TR>
+<TR VALIGN=TOP><TD>Type indicator</TD>
+<TD>1</TD>
+<TD>Currently set to 56 (decimal)</TD></TR>
+<TR VALIGN=TOP><TD>Level indicator</TD>
+<TD>1</TD>
+<TD>Currently set to 2</TD></TR>
+<TR VALIGN=TOP><TD>High X dot</TD>
+<TD>2</TD>
+<TD>Width of the graphics area: 1, in pixels</TD></TR>
+<TR VALIGN=TOP><TD>High Y dot</TD>
+<TD>2</TD>
+<TD>Height of the graphics area: 1, in pixels</TD></TR>
+<TR VALIGN=TOP><TD>Aspect ratio</TD>
+<TD>4</TD>
+<TD>Graphics area aspect ratio (horizontal size/vertical size in inches), scaled by 10,000,000. This value is always written with the least significant byte first. </TD></TR>
+<TR VALIGN=TOP><TD>Hardware fill</TD>
+<TD>2</TD>
+<TD>Either 0 or 2 (value is unimportant)</TD></TR>
+<TR VALIGN=TOP><TD>Test number</TD>
+<TD>2</TD>
+<TD>A number (1234 hex) used to determine whether all 2-byte values in the slide were written with the high-order byte first (Intel 8086-family CPUs) or the low-order byte first (Motorola 68000-family CPUs) </TD></TR>
+</TABLE><P>
+<P>
+Data records follow the header. Each data record begins with a 2-byte field whose high-order byte is the record type. The remainder of the record may be composed of 1-byte or 2-byte fields as described in the following table. To determine whether the 2-byte fields are written with the high-order byte first or the low-order byte first, examine the Test number field of the header that is described earlier.<P>
+<I>Slide file data records<BR></I>
+<TABLE BORDER=1><TR VALIGN=TOP><TD><B>Record type (hex)</B></TD>
+<TD><B>Bytes</B></TD>
+<TD><B>Meaning</B></TD>
+<TD><B>Description</B></TD></TR>
+<TR VALIGN=TOP><TD>00-7F</TD>
+<TD>8</TD>
+<TD>Vector</TD>
+<TD>The from-X coordinate for an ordinary vector. From-Y, to-X, and to-Y follow in that order as 2-byte values. The from point is saved as the last point.</TD></TR>
+<TR VALIGN=TOP><TD>80-FA</TD>
+<TD>--</TD>
+<TD>Undefined</TD>
+<TD>Reserved for future use.</TD></TR>
+<TR VALIGN=TOP><TD>FB</TD>
+<TD>5</TD>
+<TD>Offset vector</TD>
+<TD>The low-order byte and the following three bytes specify the endpoints (from-X, from-Y, to-X, to-Y) of a vector, in terms of offsets (-128 to +127) from the saved last point. The adjusted from point is saved as the last point for use by subsequent vectors.</TD></TR>
+<TR VALIGN=TOP><TD>FC</TD>
+<TD>2</TD>
+<TD>End of file</TD>
+<TD>The low-order byte is 00.</TD></TR>
+<TR VALIGN=TOP><TD>FD</TD>
+<TD>6</TD>
+<TD>Solid fill</TD>
+<TD>The low-order byte is always zero. The following two 2-byte values specify the X and Y coordinates of one vertex of a polygon to be solid filled. Three to ten such records occur in sequence. A Solid fill record with a negative Y coordinate indicates the start or end of such a flood sequence. In the start record, the X coordinate indicates the number of vertex records to follow. </TD></TR>
+<TR VALIGN=TOP><TD>FE</TD>
+<TD>3</TD>
+<TD>Common endpoint vector </TD>
+<TD>This is a vector starting at the last point. The low-order byte and the following byte specify to-X and to-Y in terms of offsets (-128 to +127) from the saved last point. The adjusted to point is saved as the last point for use by subsequent vectors.</TD></TR>
+<TR VALIGN=TOP><TD>FF</TD>
+<TD>2</TD>
+<TD>New color</TD>
+<TD>Subsequent vectors are to be drawn using the color number indicated by the low-order byte.</TD></TR>
+</TABLE><P>
+<P>
+If a slide contains any vectors at all, a New color record will be the first data record. The order of the vectors in a slide, and the order of the endpoints of those vectors, may vary.<P>
+For example, the following is an annotated hex dump of a simple slide file created on an IBM PC/AT with an IBM Enhanced Graphics Adapter. The slide consists of a white diagonal line from the lower-left corner to the upper-right corner of the graphics area, a green vertical line near the lower-left corner, and a small red rectangle at the lower-left corner.<P>
+
+<TT>41 75 74 6F 43 41&nbsp;&nbsp;</TT><I>ID string ("AutoCAD Slide" CR LF ^Z NUL)</I> <BR>
+<TT>44 20 53 6C 69 64 </TT><BR>
+<TT>65 0D 0A 1A 00 </TT><BR>
+<TT>56&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Type indicator (56)</I> <BR>
+<TT>02&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Level indicator (2)</I> <BR>
+<TT>3C 02&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>High X dot (572)</I> <BR>
+<TT>24 01&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>High Y dot (292)</I> <BR>
+<TT>0B 80 DF 00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Aspect ratio (14,647,307 / 10,000,000 = 1.46)</I> <BR>
+<TT>02 00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Hardware fill (2)</I> <BR>
+<TT>34 12&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Test number (1234 hex)</I> <BR>
+<TT>07 FF&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>New color (7 = white)</I> <BR>
+<TT>3C 02 24 01 00 00 00 00&nbsp;&nbsp;</TT><I>Vector from 572,292 to 0,0. 572,292 becomes "last" point</I> <BR>
+<TT>3 FF&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>New color (3 = green)</I> <BR>
+<TT>0F 00 32 00 0F 00 13 00&nbsp;&nbsp;</TT><I>Vector from 15,50 to 15,19. \x1115,50 becomes "last" point</I> <BR>
+<TT>01 FF&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>New color (1 = red)</I> <BR>
+<TT>12 FB E7 12 CE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Offset vector from 15+18,50-25 (33,25) to 15+18,50-50 (33,0). 33,25 becomes "last" point</I>  <BR>
+<TT>DF FE 00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Common-endpoint vector from 33,25 to 33-33,25+0 (0,25). 0,25 becomes "last" point</I> <BR>
+<TT>00 FE E7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Common-endpoint vector from (0,25) to 0+0,25-25 (0,0). 0,0 becomes "last" point</I> <BR>
+<TT>21 FE 00&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>Common-endpoint vector from (0,0) to 0+33,0+0 (33,0).33,0 becomes "last" point</I> <BR>
+<TT>00 FC&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>End of file</I> <P>
+
+<A NAME="ID_400470"></A><a name="Old_Slide_Header"></a><H3>Old Slide Header</H3><P>
+The slide format described in the previous section is produced by AutoCAD Release 9 and later, and is portable among all computers running AutoCAD Release 9 or later. Previous versions of AutoCAD (as well as AutoShade 1.0 and AutoSketch 1.02) produce slides with a somewhat different header, as shown in the following table. <P>
+<I>Old slide file header format<BR></I>
+<TABLE BORDER=1><TR VALIGN=TOP><TD><B>Field</B></TD>
+<TD><B>Bytes</B></TD>
+<TD><B>Description</B></TD></TR>
+<TR VALIGN=TOP><TD>ID string</TD>
+<TD>17</TD>
+<TD>"AutoCAD Slide" CR LF ^Z NUL</TD></TR>
+<TR VALIGN=TOP><TD>Type indicator</TD>
+<TD>1</TD>
+<TD>56 (decimal)</TD></TR>
+<TR VALIGN=TOP><TD>Level indicator</TD>
+<TD>1</TD>
+<TD>1 (old format) </TD></TR>
+<TR VALIGN=TOP><TD>High X dot</TD>
+<TD>2</TD>
+<TD>Width of the graphics area: 1, in pixels</TD></TR>
+<TR VALIGN=TOP><TD>High Y dot</TD>
+<TD>2</TD>
+<TD>Height of the graphics area: 1, in pixels</TD></TR>
+<TR VALIGN=TOP><TD>Aspect ratio</TD>
+<TD>8</TD>
+<TD>Graphics area aspect ratio (horizontal size/vertical size in inches), written as a floating-point number</TD></TR>
+<TR VALIGN=TOP><TD>Hardware fill</TD>
+<TD>2</TD>
+<TD>Either 0 or 2 (value is unimportant)</TD></TR>
+<TR VALIGN=TOP><TD>Filler byte</TD>
+<TD>1</TD>
+<TD>Unused</TD></TR>
+</TABLE><P>
+<P>
+Note that the old-format header does not contain a Test number field. The floating-point aspect ratio value and all 2-byte integers are written in the native format of the CPU that was used to create the file (for 8086-family CPUs, IEEE double-precision, and low-order byte first). Old-format slide files are not portable across machine types, but they can be read by any version of AutoCAD running on the same CPU type as the CPU with which the slide was created.<P>
+<a name="Slide_Library_File_Format"></a><hr><P>
+<A NAME="ID_399856"></A><a href="#TOP"><H2>Slide Library File Format</H2></a><P>
+This section describes the format of AutoCAD slide libraries (Release 9 and later) for the benefit of developers who wish to incorporate support for slide libraries into their programs. <P>
+The general format of a slide library is as follows: <P>
+<TT>"AutoCAD Slide Library 1.0" CR LF ^Z NUL NUL NUL NUL  </TT><I>Header (32 bytes)</I> <BR>
+<I>One or more slide directory entries (36 bytes each)</I> <BR>
+<I>One or more slides (variable length)</I> <P>
+
+Slide directory entries have the following format: <P>
+<I>Slide name (NUL terminated) (32 bytes)</I> <BR>
+<I>Address of slide within library file (4 bytes)</I> <P>
+
+The slide address is always written with the low-order byte first. Each slide to which the directory points is a complete slide file as described in the previous section. The end of the slide directory is signified by an entry with a null slide name (first byte is NUL). A slide library can contain a mixture of old-format and new-format slides.<P>
+
+<hr><center><font size=2><tt>
+. <a href="dxf_toc.htm">CONTENTS</a> . | . <a href="al_u04_c.htm">DXF GROUP CODES</a> . | . <a href="#Top">DRAWING INTERCHANGE FILE FORMATS (TOP)</a> . </tt></font></center>
+<hr>
+
+</BODY></HTML>

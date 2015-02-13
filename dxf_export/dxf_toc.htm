@@ -1,0 +1,115 @@
+<HTML><HEAD><TITLE>AutoCAD DXF Documentation</TITLE></HEAD><BODY>
+<center><h1>DXF Documentation -- Contents</h1></center>
+
+<hr><center><font size=2><tt>
+. <b>CONTENTS</b> . | . <a href="al_u04_c.htm">DXF GROUP CODES</a> . | . <a href="al_u04_d.htm">DRAWING INTERCHANGE FILE FORMATS</a> . </tt></font></center>
+<hr>
+
+<ul>
+<li><a href="#Appendix_C">Appendix C--DXF Group Codes</a>
+<li><a href="#Appendix_D">Appendix D--Drawing Interchange File Formats</a>
+</ul>
+
+<a name="Appendix_C"></a><hr size=1>
+<h3><a href="al_u04_c.htm"><b>Appendix C--DXF Group Codes</b></a></h3>
+<pre>
+&nbsp;&nbsp;<b><a href="al_u04_c.htm#General_DXF_Conventions">General DXF Conventions</a></b>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Group_Code_Ranges">Group Code Ranges</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Group_Codes_in_Numerical_Order">Group Codes in Numerical Order</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Object_and_Entity_Codes">Object and Entity Codes</a>
+
+&nbsp;&nbsp;<b><a href="al_u04_c.htm#HEADER_Section">HEADER Section</a></b>
+
+&nbsp;&nbsp;<b><a href="al_u04_c.htm#CLASSES_Section">CLASSES Section</a></b>
+
+&nbsp;&nbsp;<b><a href="al_u04_c.htm#TABLES_Section">TABLES Section</a></b>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Symbol_Tables_in_DXF_Files">Symbol Tables in DXF Files</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Symbol_Table_Group_Codes">Symbol Table Group Codes</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Common_Group_Codes_for_Symbol_Table_Entries">Common Group Codes for Symbol Table Entries </a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#APPID">APPID</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#BLOCK_RECORD">BLOCK_RECORD</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#DIMSTYLE">DIMSTYLE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#LAYER">LAYER</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#LTYPE">LTYPE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#STYLE">STYLE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#UCS">UCS</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#VIEW">VIEW</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#VPORT">VPORT</a>
+
+&nbsp;&nbsp;<b><a href="al_u04_c.htm#BLOCKS_Section">BLOCKS Section</a></b>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Blocks_in_DXF_Files">Blocks in DXF Files</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#BLOCK">BLOCK</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#ENDBLK">ENDBLK</a>
+
+&nbsp;&nbsp;<b><a href="al_u04_c.htm#ENTITIES_Section">ENTITIES Section</a></b>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Common_Group_Codes_for_Graphical_Objects">Common Group Codes for Graphical Objects</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#3DFACE">3DFACE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#3DSOLID">3DSOLID</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#ARC">ARC</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#ATTDEF">ATTDEF</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#ATTRIB">ATTRIB</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#BODY">BODY</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#CIRCLE">CIRCLE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#DIMENSION">DIMENSION</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#ELLIPSE">ELLIPSE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#INSERT">INSERT</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#LEADER">LEADER</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#LINE">LINE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#MLINE">MLINE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#MTEXT">MTEXT</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#OLEFRAME">OLEFRAME</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#POINT">POINT</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#POLYLINE">POLYLINE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#RAY">RAY</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#REGION">REGION</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#SEQEND">SEQEND</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#SHAPE">SHAPE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#SOLID">SOLID</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#SPLINE">SPLINE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#TEXT">TEXT</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#TOLERANCE">TOLERANCE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#TRACE">TRACE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#VERTEX">VERTEX</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#VIEWPORT">VIEWPORT</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#XLINE">XLINE</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#ACAD_ZOMBIE_ENTITY">ACAD_ZOMBIE_ENTITY</a>
+
+&nbsp;&nbsp;<b><a href="al_u04_c.htm#OBJECTS_Section">OBJECTS Section</a></b>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Named_Object_Dictionary">Named Object Dictionary</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Object_Group_Codes_in_DXF_Files">Object Group Codes in DXF Files</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Common_Object_Group_Codes">Common Object Group Codes</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#DICTIONARY">DICTIONARY</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#XRECORD">XRECORD</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#ACAD_ZOMBIE_OBJECT">ACAD_ZOMBIE_OBJECT</a>
+
+&nbsp;&nbsp;<b><a href="al_u04_c.htm#Advanced_DXF_Issues">Advanced DXF Issues</a></b>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Database_Objects">Database Objects</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Persistent_Inter-Object_Reference_Handles">Persistent Inter-Object Reference Handles</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Subclass_Markers">Subclass Markers</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Extension_Dictionary_and_Persistent_Reactors">Extension Dictionary and Persistent Reactors</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Extended_Data">Extended Data</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_c.htm#Object_Coordinate_Systems_(OCS)">Object Coordinate Systems (OCS)</a>
+</pre>
+
+
+<a name="Appendix_D"></a><hr size=1>
+<h3><a href="al_u04_d.htm"><b>Appendix D--Drawing Interchange File Formats</b></a></h3>
+<pre>
+&nbsp;&nbsp;<b><a href="al_u04_d.htm#ASCII_DXF_File_Format">ASCII DXF File Format</a></b>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_d.htm#New_for_AutoCAD_Release_13">New for AutoCAD Release 13</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_d.htm#General_File_Structure">General File Structure</a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_d.htm#Symbol_Table_Example">Symbol Table Example </a>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_d.htm#Writing_DXF_Interface_Programs">Writing DXF Interface Programs</a>
+
+&nbsp;&nbsp;<b><a href="al_u04_d.htm#Binary_DXF_File_Format">Binary DXF File Format</a></b>
+
+&nbsp;&nbsp;<b><a href="al_u04_d.htm#DXB_Files">DXB Files</a></b>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_d.htm#The_DXB_File_Format">The DXB File Format</a>
+
+&nbsp;&nbsp;<b><a href="al_u04_d.htm#Slide_File_Format">Slide File Format</a></b>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="al_u04_d.htm#Old_Slide_Header">Old Slide Header</a>
+
+&nbsp;&nbsp;<b><a href="al_u04_d.htm#Slide_Library_File_Format">Slide Library File Format</a></b>
+
+</PRE>
+</BODY></HTML>
