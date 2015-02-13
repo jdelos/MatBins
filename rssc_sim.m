@@ -1,0 +1,29 @@
+function [ rscc, Vo_m , Io_m] = rssc_sim(t,Ph1,Vtrg,Vout,Io,n)
+%UNTITLED2 Summary of this function goes here
+%   Detailed explanation goes here
+
+I_cross=find(and(xor(Ph1(1:end-1),Ph1(2:end)),Ph1(2:end))==1)+1;
+%find a Switching Periode
+if isempty(I_cross)
+   error('Rssc_simPh1','No crossing found Ph1'); 
+end
+
+I_to=I_cross(end-n);
+I_tend=I_cross(end);
+
+Irng=I_to:I_tend;
+
+to=t(I_to);
+tend=t(I_tend);
+
+T=tend-to;
+
+Vo_m=1/T.*trapz(t(Irng),Vout(Irng); %Compute average value
+Io_m=1/T.*trapz(t(Irng),Io(Irng); %Compute average value
+
+rscc =(Vtrg-Vo_m)/Io_m;
+
+%k_matrix=k_matrix.';
+
+end
+
